@@ -1,0 +1,32 @@
+[
+{
+"address": "255",
+"IRType": "1",
+"IRCommand": "0x20DF10EF",
+"description": "LG ON/OFF"
+},
+{
+"address": "9",
+"IRType": "1",
+"IRCommand": "0x20DF40BF",
+"description": "LG VOL UP"
+},
+{
+"address": "10",
+"IRType": "1",
+"IRCommand": "0x20DFC03F",
+"description": "LG VOL DOWN"
+},
+{
+"address": "255",
+"IRType": "1",
+"IRCommand": "0x807F807F",
+"description": "DIGIA 0/1"
+},
+{
+"address": "255",
+"IRType": "3",
+"IRCommand": "0x0018C",
+"description": "PHIL 1/0"
+}
+]

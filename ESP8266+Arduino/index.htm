@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html><head>
+<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>-->
+<style>
+.IO_box {
+ margin: 0 1px 1px 0;
+ border: 1px solid blue;
+ padding: 0 5px 0 5px;
+ width: 470px;}
+</style></head>
+<body onload="loader()">
+<div id="htmlpage"></div>
+<script>
+
+var data;
+var backupJSON;
+
+function createElement(settings){
+	var tmphtml="<";
+	switch(settings.type){
+		case "div": tmphtml+="div";break;
+		case "label": tmphtml+="label";break;
+		case "a": tmphtml+="a";break;
+		case "img": tmphtml+="img";break;
+		default: tmphtml+="input type=\""+settings.type+"\"";break;
+	}
+	tmphtml+=createElement2(settings);
+	switch(settings.type){
+		case "div": tmphtml+="></div>";break;
+		case "label": tmphtml+="></label>";break;
+		case "a": tmphtml+="></a>";break;
+		default: tmphtml+=">";break;
+	}
+	return tmphtml;
+}
+
+function createElement2(settings){
+	var tmphtml="";
+	if (settings.value!=undefined){
+		tmphtml+=" value=\""+settings.value+"\"";
+	}
+	if (settings.id!=undefined){
+		tmphtml+=" id=\""+settings.id+"\"";
+	}
+	if (settings.class!=undefined){
+		tmphtml+=" class=\""+settings.class+"\"";
+	}
+	if (settings.onclick!=undefined) {
+		tmphtml+=" onclick=\""+settings.onclick+"\"";
+	}
+	if (settings.maxlength!=undefined) {
+		tmphtml+=" maxlength=\""+settings.maxlength+"\"";
+	};
+	if (settings.size!=undefined) {
+		tmphtml+=" size=\""+settings.size+"\"";
+	};
+	if (settings.src!=undefined){
+		tmphtml+=" src=\""+settings.src+"\"";
+	}
+	if (settings.href!=undefined){
+		tmphtml+=" href=\""+settings.href+"\"";
+	}
+	tmphtml+=settings.isDisabled || "";
+	tmphtml+=settings.isHidden || "";
+	return tmphtml
+}
+
+function loader(){
+	var out="";
+	out+=createElement({type:"div",id:"MenuTable",class:"IO_box"});
+	out+=createElement({type:"div",id:"logo",class:"IO_box"});
+	out+=createElement({type:"div",id:"MC1Table",class:"IO_box",isHidden:"hidden"});
+	out+=createElement({type:"div",id:"MC0Table",class:"IO_box",isHidden:"hidden"});
+	out+=createElement({type:"div",id:"MC2Table",class:"IO_box",isHidden:"hidden"});
+	out+=createElement({type:"div",id:"MC3Table",class:"IO_box",isHidden:"hidden"});
+	out+=createElement({type:"div",id:"MC4Table",class:"IO_box"});
+	out+=createElement({type:"div",id:"MC5Table",class:"IO_box",isHidden:"hidden"});
+	out+=createElement({type:"div",id:"JSONString",class:"IO_box"});
+	out+=createElement({type:"div",id:"testing2",class:"IO_box"});
+	InnerByID("htmlpage",out);
+	out="";
+	tmpvar="JSONString";
+	out+=createElement({type:"button",value:"JSON to String",onclick:"JSONtoString(tmpvar,data)"});
+	out+=createElement({type:"button",value:"save as Default",onclick:"saveasDefault()"});
+	out+=createElement({type:"button",value:"load Default",onclick:"restoreData()"});
+	out+=createElement({type:"button",value:"Delete",onclick:"deleteData()"});
+	InnerByID("MC3Table",out);
+	out=createElement({type:"text",value:"data.json",id:"sourceFile",maxlength:15,size:15});
+	out+=createElement({type:"button",value:"load JSON",onclick:"getJSON()"});
+	out+=createElement({type:"button",value:"Save JSON",onclick:"sendtoESP8266()"});	
+	out+="<br>";
+	out+=createElement({type:"checkbox",id:"fromArduino"});
+	out+=createElement({type:"label",id:"fromArduinoLabel"});
+	InnerByID("MC4Table",out);
+	InnerByID("fromArduinoLabel","read from Arduino");
+	getJSON();
+//	data=[{"address":"5","description":"testing","IRType":"1","IRCommand":"0x20bd30ef"}];
+//	loadbody();
+}
+
+function saveasDefault(){
+	backupJSON=JSON.parse(JSON.stringify(data));
+}
+
+function restoreData(){
+	data=JSON.parse(JSON.stringify(backupJSON));
+	JSONtoString("JSONString",data);
+	reloadPage();
+}
+
+function deleteData(){
+	data=JSON.parse("[]");
+	reloadPage();
+}
+
+function reloadPage(){
+	JSONtoString("JSONString",data);
+	newCommand();
+	executeIRTable();
+	showallIR();
+}
+
+function addNew(){
+	thisPos=data.length;
+data[thisPos]={};
+	storeData(thisPos,255);
+	reloadPage();
+}
+
+function newCommand(){
+	var out="";
+	out+=createElement({type:"text",id:"Addr255",maxlength:2,size:2});
+	out+=createElement({type:"text",id:"Descr255",maxlength:10,size:10});
+	out+=getProt(255);
+	out+=createElement({type:"text",id:"IRCmd255",maxlength:10,size:10});
+	out+=createElement({type:"button",value:"Add",onclick:"addNew()"});
+	InnerByID("MC1Table",out);	
+	Disable("Prot255",false);
+}
+
+function ValueByID(id,value){
+	document.getElementById(id).value=value;
+}
+
+function changeID(id,new_id){
+	document.getElementById(id).id=new_id;
+}
+
+function executeIRTable(){
+	var out="";
+	var i;
+	for (i=0;i<data.length;i++){
+		out+=createElement({type:"button",value:data[i].description,id:i,onclick:"executeIR(this.id)"});
+	}
+	InnerByID("MC2Table",out);
+}
+
+function MenuChoice(Selection){
+	document.getElementById(Selection+"Table").hidden=!document.getElementById(Selection+"Table").hidden;
+}
+
+function loadMenu(){
+	var out="";
+	for (i=0;i<6;i++){
+		out+=createElement({type:"checkbox",value:"MS"+i,id:"MC"+i,onclick:"MenuChoice(this.id)"});
+		out+=createElement({type:"label",id:"MCD"+i});
+		out+="<br>"
+	}
+	out+=createElement({type:"a",id:"subscribe",href:"https://www.youtube.com/channel/UCJXrqNC_wywU_okca2Wmv3w?sub_confirmation=1"});
+	InnerByID("MenuTable",out);
+	InnerByID("MCD0","Show Stored Commands");
+	InnerByID("MCD1","Add New Command");
+	InnerByID("MCD2","Execute Command");
+	InnerByID("MCD3","JSON");
+	InnerByID("MCD4","Communication");
+	InnerByID("MCD5","Empty Feature");
+	out=createElement({type:"img",src:"http://s10.postimg.org/mjl8lzymt/youtube_subscribe_button.png"});
+	InnerByID("subscribe",out);
+}
+
+function InnerByID(id,value){
+	document.getElementById(id).innerHTML=value;
+}
+
+function Hide(id,b_state){
+	document.getElementById(id).hidden=b_state;
+}
+
+function Disable(id,b_state){
+	document.getElementById(id).disabled=b_state;
+}
+
+function MC0Disable(thisAddr,b_state){
+	Disable("Addr"+thisAddr,b_state);
+	Disable("Descr"+thisAddr,b_state);
+	Disable("IRCmd"+thisAddr,b_state);
+	Disable("Prot"+thisAddr,b_state);
+}
+
+function storeData(Pos,Pos2){
+	data[Pos].address=ReturnValue("Addr"+Pos2);
+	data[Pos].IRType=ReturnValue("Prot"+Pos2);
+	data[Pos].IRCommand=ReturnValue("IRCmd"+Pos2);
+	data[Pos].description=ReturnValue("Descr"+Pos2);
+}
+
+function editThis(editID,onAddr){
+	if (editID=="Delete"+onAddr){
+		data.splice(onAddr,1);
+		InnerByID("MC0Table","");
+		reloadPage();
+	} else if (editID=="Edit"+onAddr){
+		MC0Disable(onAddr,false)
+		ValueByID("Edit"+onAddr,"Save IR");
+		changeID(editID,"Save"+onAddr);
+		ValueByID("Execute"+onAddr,"Cancel");
+		changeID("Execute"+onAddr,"Cancel"+onAddr);	
+	} else if (editID=="Save"+onAddr){
+		MC0Disable(onAddr,true);
+		ValueByID(editID,"Edit IR");
+		changeID(editID,"Edit"+onAddr);
+		ValueByID("Cancel"+onAddr,"Execute");
+		changeID("Cancel"+onAddr,"Execute"+onAddr);
+		storeData(onAddr,onAddr);
+		JSONtoString("JSONString",data);
+		executeIRTable();
+	} else if (editID=="Cancel"+onAddr){
+		MC0Disable(onAddr,true);
+		ValueByID("Save"+onAddr,"Edit IR");
+		changeID("Save"+onAddr,"Edit"+onAddr);
+		ValueByID("Cancel"+onAddr,"Execute");
+		changeID("Cancel"+onAddr,"Execute"+onAddr);
+		ValueByID("Addr"+onAddr,data[onAddr].address);
+		ValueByID("Descr"+onAddr,data[onAddr].description);
+		ValueByID("IRCmd"+onAddr,data[onAddr].IRCommand);
+		selProt("Prot"+onAddr,data[onAddr].IRType);
+	} else if (editID=="Execute"+onAddr){
+		executeIR(onAddr);
+	}
+}
+
+function ReturnValue(fromID){
+	return document.getElementById(fromID).value;
+}
+
+function sendtoESP8266(){
+	var curRec=0;
+	var totalRec=data.length;
+  	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+    	if (xhttp.readyState == 4 && xhttp.status == 200) {
+		tmpResponse=xhttp.responseText;
+		if (curRec<totalRec) {
+			xhttp.open("GET", "update?curRec="+(curRec+1)+"&totalRec="+totalRec+"&JSON="+JSON.stringify(data[curRec]), true);
+			xhttp.send();
+			curRec=curRec+1;
+		} else {
+			if (tmpResponse.indexOf("ESP_Restart",0)==-1){
+				xhttp.open("GET","luaCMD?ESP_Restart",true);
+				xhttp.send();
+				totalRec=0;
+				curRec=0;
+			}
+		}
+	}
+	};
+	xhttp.open("GET", "update?createFile&totalRec=" +totalRec, true);
+	xhttp.send();	
+}
+
+function clearAll(){
+	InnerByID("MenuTable","");
+	InnerByID("MC0Table","");
+	InnerByID("MC1Table","");
+	InnerByID("MC2Table","");
+	InnerByID("MC3Table","");
+	InnerByID("MC4Table","");
+	InnerByID("JSONString","");
+	InnerByID("testing2","");
+}
+
+function logo(){
+	out="";
+	out+="";
+}
+
+function loadbody(){
+	logo();
+	newCommand();
+	executeIRTable();
+	showallIR();
+	loadMenu();
+	dochecks();
+	JSONtoString("JSONString",data);
+}
+
+function dochecks(){
+	for(i=0;i<6;i++){
+	if (!document.getElementById("MC"+i+"Table").hidden){
+			document.getElementById("MC"+i).checked=true;
+	}
+	}
+}
+
+function getJSON(){
+  	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+	    	if (xhttp.readyState == 4) {
+			data=JSON.parse(xhttp.responseText);
+			if (backupJSON===undefined) {
+				backupJSON=JSON.parse(xhttp.responseText);
+			}
+			loadbody();
+	    	}
+	};
+	myRequest=ReturnValue("sourceFile");
+	if (document.getElementById("fromArduino").checked){
+		myRequest+="&fromArduino";
+	}
+	xhttp.open("GET", myRequest, true);
+// to evala kateftian
+// +"fromArduino="+document.getElementById("fromArduino").checked
+	xhttp.overrideMimeType("application/json");
+	xhttp.send();
+}
+
+function executeIR(thisID){
+nocache = "&nocache=" + Math.random() * 10 +"?";
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (xhttp.readyState == 4 && xhttp.status == 200) {
+    }
+  };
+  xhttp.open("GET", nocache + thisID, true);
+  xhttp.send();
+}
+
+function showallIR(){
+	var out="";
+	for (i=0;i<data.length;i++){
+		var tmpAddr=data[i].address;
+		out+=createElement({type:"text",value:tmpAddr,id:"Addr"+i,maxlength:2,size:2,isDisabled:" disabled"});
+		out+=createElement({type:"text",value:data[i].description,id:"Descr"+i,maxlength:10,size:10,isDisabled:" disabled"});
+	out+=getProt(i);
+	out+=createElement({type:"text",value:data[i].IRCommand,id:"IRCmd"+i,maxlength:10,size:10,isDisabled:" disabled"});
+	out+=createElement({type:"button",value:"Edit IR",id:"Edit"+i,onclick:"editThis(this.id,"+i+")"});
+	out+=createElement({type:"button",value:"Execute",id:"Execute"+i,onclick:"editThis(this.id,"+i+")"});
+	out+=createElement({type:"button",value:"X",id:"Delete"+i,onclick:"editThis(this.id,"+i+")"});
+	out+="<br>";
+	}
+	InnerByID("MC0Table",out);
+	for(i=0;i<data.length;i++){
+	selProt("Prot"+i,data[i].IRType);
+	}
+}
+
+function selProt(thisid,selectthis){
+	document.getElementById(thisid).value=selectthis;
+}
+
+function getProt(onAddr){
+	var out="";
+	out+=	"<select name=\"protocols\" id=\"Prot"+onAddr+"\" disabled style=\"width:70px\">";
+	out+="<option value=1>NEC</option>";
+	out+="<option value=2>SONY</option>";
+	out+="<option value=3>RC5</option>";
+	out+="<option value=4>RC6</option>";
+	out+="<option value=5>PANASONIC</option>";
+	out+="<option value=6>JVC</option>";
+	out+="<option value=7>NECX</option>";
+	out+="</select>";
+	return out;	
+}
+
+function JSONtoString(myid,mydata){
+	var JSONString=JSON.stringify(mydata);
+	InnerByID(myid,JSONString);
+//	Hide(myid,!document.getElementById(myid).hidden);
+}
+
+</script>
+<!--<script type="text/javascript" src="D:\Arduino Projects\Arduino-ESP8266 IR\data.json"></script>-->
+<!-- -->
+</body>
+</html>
