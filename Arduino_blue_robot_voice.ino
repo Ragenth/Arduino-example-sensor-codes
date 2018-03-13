@@ -1,5 +1,5 @@
-
-
+*/ Download AFmptor.h and google play store app 
+ */
 #include <AFMotor.h> //Adafruit Motor Shield Library. First you must download and install AFMotor library
 #include <Servo.h>   //Servo library. This is standard library. (Sketch -> Include Library -> Servo)
 String voice;
